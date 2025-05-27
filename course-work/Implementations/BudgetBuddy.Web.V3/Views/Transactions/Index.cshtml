@@ -1,0 +1,204 @@
+﻿@model BudgetBuddy.Web.V3.Models.PagedResult<TransactionViewModel>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+@{
+    ViewData["Title"] = "Transactions";
+}
+
+<h2 class="mb-4">Transactions</h2>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <canvas id="budgetChart" height="100"></canvas>
+    </div>
+</div>
+
+<script>
+    const ctx = document.getElementById('budgetChart').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Income', 'Expenses', 'Balance'],
+            datasets: [{
+                label: 'Budget Summary',
+                data: [@Model.TotalIncome, @Model.TotalExpense, @Model.Balance],
+                backgroundColor: [
+                    'rgba(25, 135, 84, 0.7)',   // Green
+                    'rgba(220, 53, 69, 0.7)',   // Red
+                    'rgba(13, 110, 253, 0.7)'   // Blue
+                ],
+                borderColor: [
+                    'rgba(25, 135, 84, 1)',
+                    'rgba(220, 53, 69, 1)',
+                    'rgba(13, 110, 253, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+
+
+<div class="mb-4">
+    <div class="card text-white bg-dark border border-light mb-3">
+        <div class="card-body d-flex justify-content-around">
+            <div>
+                <h5 class="card-title">Income</h5>
+                <p class="card-text text-success fw-bold">@Model.TotalIncome.ToString("C")</p>
+            </div>
+            <div>
+                <h5 class="card-title">Expenses</h5>
+                <p class="card-text text-danger fw-bold">@Model.TotalExpense.ToString("C")</p>
+            </div>
+            <div>
+                <h5 class="card-title">Balance</h5>
+                <p class="card-text fw-bold @(Model.Balance >= 0 ? "text-success" : "text-danger")">
+                    @Model.Balance.ToString("C")
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Create New
+    </a>
+
+    <form asp-action="Index" method="get" class="d-flex" role="search" aria-label="Search transactions">
+        <input type="text" name="searchString" value="@ViewData["SearchString"]" class="form-control me-2" placeholder="Search..." />
+        <button type="submit" class="btn btn-outline-secondary">Search</button>
+    </form>
+</div>
+
+
+<table class="table table-striped table-hover align-middle">
+    <thead class="table-dark">
+        <tr>
+            <th>
+                <a asp-action="Index"
+                   asp-route-sortOrder="@(ViewData["CurrentSort"]?.ToString() == "amount" ? "amount_desc" : "amount")"
+                   asp-route-searchString="@ViewData["SearchString"]"
+                   class="text-white text-decoration-none">
+                    Amount
+                    @if (ViewData["CurrentSort"]?.ToString() == "amount")
+                    {
+                        <i class="bi bi-caret-up-fill"></i>
+                    }
+                    else if (ViewData["CurrentSort"]?.ToString() == "amount_desc")
+                    {
+                        <i class="bi bi-caret-down-fill"></i>
+                    }
+                </a>
+            </th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>
+                <a asp-action="Index"
+                   asp-route-sortOrder="@(ViewData["CurrentSort"]?.ToString() == "date_desc" ? "" : "date_desc")"
+                   asp-route-searchString="@ViewData["SearchString"]"
+                   class="text-white text-decoration-none">
+                    Date
+                    @if (ViewData["CurrentSort"]?.ToString() == "date_desc")
+                    {
+                        <i class="bi bi-caret-down-fill"></i>
+                    }
+                    else if (ViewData["CurrentSort"]?.ToString() == "")
+                    {
+                        <i class="bi bi-caret-up-fill"></i>
+                    }
+                </a>
+            </th>
+            <th>Category</th>
+            <th class="text-center">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (!Model.Items.Any())
+        {
+            <tr>
+                <td colspan="6" class="text-center text-muted fst-italic">No transactions found.</td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var t in Model.Items)
+            {
+                <tr>
+                    <td>@t.Amount.ToString("C")</td>
+                    <td>
+                        <span class="badge @(t.Type == "Income" ? "bg-success" : "bg-danger")">@t.Type</span>
+                    </td>
+                    <td>@t.Description</td>
+                    <td>@t.Date.ToShortDateString()</td>
+                    <td>@t.CategoryName</td>
+                    <td class="text-center">
+                        <a asp-action="Details" asp-route-id="@t.Id" class="btn btn-sm btn-info me-1" title="Details">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a asp-action="Edit" asp-route-id="@t.Id" class="btn btn-sm btn-warning me-1" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <form asp-action="Delete" asp-route-id="@t.Id" method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this transaction?');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm btn-danger" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+<nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination justify-content-center">
+        <li class="page-item @(Model.HasPreviousPage ? "" : "disabled")">
+            <a class="page-link"
+               asp-action="Index"
+               asp-route-page="@(Model.PageNumber - 1)"
+               asp-route-searchString="@ViewData["SearchString"]"
+               asp-route-sortOrder="@ViewData["CurrentSort"]"
+               aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+            </a>
+        </li>
+
+        @for (int i = 1; i <= Model.TotalPages; i++)
+        {
+            <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                <a class="page-link"
+                   asp-action="Index"
+                   asp-route-page="@i"
+                   asp-route-searchString="@ViewData["SearchString"]"
+                   asp-route-sortOrder="@ViewData["CurrentSort"]">@i</a>
+            </li>
+        }
+
+        <li class="page-item @(Model.HasNextPage ? "" : "disabled")">
+            <a class="page-link"
+               asp-action="Index"
+               asp-route-page="@(Model.PageNumber + 1)"
+               asp-route-searchString="@ViewData["SearchString"]"
+               asp-route-sortOrder="@ViewData["CurrentSort"]"
+               aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+            </a>
+        </li>
+    </ul>
+</nav>
+

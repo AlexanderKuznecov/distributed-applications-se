@@ -1,0 +1,43 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center mt-5">
+
+    <h1 class="display-4 mb-4 text-primary">Welcome to <strong>BudgetBuddy</strong> 💰</h1>
+
+    <p class="lead w-75 mx-auto mb-4">
+        BudgetBuddy ти помага да следиш приходите и разходите си по лесен и интуитивен начин.
+        Управлявай категориите си, следи бюджета и постигай финансовите си цели!
+    </p>
+
+    <p class="text-muted mt-4"><i class="fas fa-lock"></i> Твоите данни са защитени с JWT аутентикация</p>
+    @if (ViewBag.Token != null)
+    {
+        <div class="alert alert-success w-75 mx-auto" role="alert">
+            <h5 class="alert-heading">You're logged in!</h5>
+            <p class="mb-2"><strong>Your JWT Token:</strong></p>
+            <textarea class="form-control font-monospace" rows="5" readonly>@ViewBag.Token</textarea>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning w-50 mx-auto" role="alert">
+            <strong>Notice:</strong> You are not logged in.
+        </div>
+    }
+
+    @if (ViewBag.Token == null)
+    {
+        <div class="mt-4">
+            <h5>Как да започнеш?</h5>
+            <ol class="list-group list-group-numbered w-50 mx-auto">
+                <li class="list-group-item">Създай акаунт или влез в системата</li>
+                <li class="list-group-item">Създай категории (например: Храна, Транспорт, Наем)</li>
+                <li class="list-group-item">Добави транзакции и проследи бюджета си</li>
+            </ol>
+        </div>
+    }
+
+
+</div>
